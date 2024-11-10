@@ -1,0 +1,41 @@
+{
+  "name": "mongotesting",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon cross-env NODE_ENV=dev src/index.js",
+    "start": "ts-node src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^18.14.6",
+    "cross-env": "^7.0.3",
+    "nodemon": "^2.0.21",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.4.1",
+    "@graphql-yoga/node": "^3.7.2",
+    "@pothos/core": "^3.27.1",
+    "@pothos/plugin-errors": "^3.11.0",
+    "@pothos/plugin-with-input": "^3.10.0",
+    "apollo-server": "^3.12.0",
+    "cors": "^2.8.5",
+    "cron": "^3.1.6",
+    "dataloader": "^2.2.2",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "graphql": "^16.6.0",
+    "graphql-scalars": "^1.20.4",
+    "graphql-yoga": "^3.7.2",
+    "mongodb": "^5.1.0",
+    "mongoose": "^7.0.1",
+    "nexus": "^1.3.0"
+  }
+}
