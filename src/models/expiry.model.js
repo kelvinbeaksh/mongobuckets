@@ -70,18 +70,33 @@ function millisToMinutesAndSeconds(millis) {
 export async function generateExpiryDocuments(count) {
   let documents = [];
   const currDate = Date.now();
+
   for (let i = 0; i < count; i++) {
-    const expireAt = new Date(currDate + Math.floor(Math.random() * 600000)+600000); // Random time within the next 10 minutes
+    let expireAt;
+
+    // 50% of documents expire in 1 to 15 minutes
+    // 50% of documents expire in 15 to 60 minutes
+    if (Math.random() < 0.5) {
+      expireAt = new Date(currDate + Math.floor(Math.random() * 900000) + 60000); // 1 to 15 minutes
+    } else {
+      expireAt = new Date(currDate + Math.floor(Math.random() * 2700000) + 900000); // 15 to 60 minutes
+    }
+
     const expiryDoc = new ExpiryModel({
       value: `Document ${i + 1}`,
       expireAt: expireAt
     });
+
     documents.push(expiryDoc);
-    if(documents.length >= 200000){
+
+    // Batch insert every 200,000 records
+    if (documents.length >= 200000) {
       await ExpiryModel.insertMany(documents);
-      documents = []
+      documents = [];
     }
   }
+
+  // Insert remaining documents
   await ExpiryModel.insertMany(documents);
 }
 
