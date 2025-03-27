@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { performance } from 'perf_hooks'; 
 import { buckets } from '../entity/buckets.js';
 
-export const NUMBER_OF_OBJECTS = 1000;
+export const NUMBER_OF_OBJECTS = 1000000;
 
 const expirySchema = new mongoose.Schema({
   value: { type: String, required: true },
@@ -17,16 +17,9 @@ const deletionLogSchema = new mongoose.Schema({
   deletionTimeDiff: { type: Number }
 });
 
-const bucketComputationLogSchema = new mongoose.Schema({
-  noOfObjects: { type: Number, required: true },
-  computationTime: { type: Number }
-});
 
-const DeletionLogModel = mongoose.model(`BucketDeletionLog${NUMBER_OF_OBJECTS}`, deletionLogSchema);
+const DeletionLogModel = mongoose.model(`DeletionLog${NUMBER_OF_OBJECTS}`, deletionLogSchema);
 const ExpiryModel = mongoose.model(`Expiry`, expirySchema);
-const BucketComputationLogModel = mongoose.model(`BucketComputationLog`, bucketComputationLogSchema);
-
-let totalComputationTime = 0;  // Variable to accumulate the total computation time
 
 const changeStream = ExpiryModel.watch([], { 
   fullDocument: "updateLookup", 
@@ -47,15 +40,6 @@ changeStream.on('change', async (change) => {
 
     await deletionLog.save();
 
-    // After deletion, you can save the total computation time to the log (if needed)
-    const computationLog = new BucketComputationLogModel({
-      noOfObjects: NUMBER_OF_OBJECTS,
-      computationTime: totalComputationTime
-    });
-    await computationLog.save();
-
-    // Reset total computation time for the next batch
-    totalComputationTime = 0; 
   }
 
   if (change.operationType === 'insert') {
@@ -75,12 +59,6 @@ changeStream.on('change', async (change) => {
     } else if (deletionTimeDiff > 300000) {
       buckets.addToRestBucket(documentId, expireAt);
     }
-
-    const endTime = performance.now();
-    const computationTime = (endTime - startTime) ?? 0;
-
-    // Accumulate the total computation time
-    totalComputationTime += computationTime;
   }
 });
 
@@ -94,33 +72,18 @@ function millisToMinutesAndSeconds(millis) {
 export async function generateExpiryDocuments(count) {
   let documents = [];
   const currDate = Date.now();
-
   for (let i = 0; i < count; i++) {
-    let expireAt;
-
-    // 50% of documents expire in 1 to 15 minutes
-    // 50% of documents expire in 15 to 60 minutes
-    // if (Math.random() < 0.5) {
-    expireAt = new Date(currDate + Math.floor(Math.random() * 600000)+600000);
-    // } else {
-    //   expireAt = new Date(currDate + Math.floor(Math.random() * 2700000) + 900000); // 15 to 60 minutes
-    // }
-
+    const expireAt = new Date(currDate + Math.floor(Math.random() * 600000)+600000); // Random time within the next 10 minutes
     const expiryDoc = new ExpiryModel({
       value: `Document ${i + 1}`,
       expireAt: expireAt
     });
-
     documents.push(expiryDoc);
-
-    // Batch insert every 200,000 records
-    if (documents.length >= 200000) {
+    if(documents.length >= 200000){
       await ExpiryModel.insertMany(documents);
-      documents = [];
+      documents = []
     }
   }
-
-  // Insert remaining documents
   await ExpiryModel.insertMany(documents);
 }
 
